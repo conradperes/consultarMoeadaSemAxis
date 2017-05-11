@@ -14,33 +14,32 @@
  * permissions and limitations under the License.
  *
  */
-package com.cds.bacenConsultaMoedaClient;
+package com.cds.pcrj.bacenConsultaMoedaSemAxisIntegration;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import javax.xml.bind.annotation.XmlAttribute;
-
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.params.HttpParams;
-import org.apache.http.util.EntityUtils;
+import org.apache.camel.builder.RouteBuilder;
+import org.apache.camel.component.servlet.CamelHttpTransportServlet;
+import org.apache.camel.model.rest.RestBindingMode;
+import org.apache.camel.model.rest.RestPropertyDefinition;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.stereotype.Component;
+import javax.servlet.ServletRequest;
+import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Response;
 
-import com.google.common.io.CharStreams;
+import org.apache.camel.Exchange;
+import org.apache.camel.Message;
+import org.apache.camel.Processor;
+import org.apache.camel.builder.RouteBuilder;
+import org.apache.camel.component.cxf.common.message.CxfConstants;
+import org.apache.cxf.message.MessageContentsList;
 
 @SpringBootApplication
 // load regular Spring XML file from the classpath that contains the Camel XML
@@ -52,81 +51,49 @@ public class Application {
 	 * A main method to start this application.
 	 */
 	public static void main(String[] args) {
-		// SpringApplication.run(Application.class, args);
-		try {
-			print(callWebService(null, null));
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		SpringApplication.run(Application.class, args);
+		// MoedaBean bean = new MoedaBean();
+		// try {
+		// bean.print("\t"+bean.consultaCotacao(21630L)+"\t");
+		// } catch (IOException e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// }
+	}
+
+	Map<String, String> xmlJsonOptions = new HashMap<String, String>();
+
+	@Bean
+	ServletRegistrationBean servletRegistrationBean() {
+		ServletRegistrationBean servlet = new ServletRegistrationBean(new CamelHttpTransportServlet(),
+				"/consultarMoeda/*");
+		servlet.setName("CamelServlet");
+
+		// From XML to JSON - inline dataformat w/options
+		xmlJsonOptions.put(org.apache.camel.model.dataformat.XmlJsonDataFormat.ENCODING, "UTF-8");
+		xmlJsonOptions.put(org.apache.camel.model.dataformat.XmlJsonDataFormat.ROOT_NAME, "newRoot");
+		xmlJsonOptions.put(org.apache.camel.model.dataformat.XmlJsonDataFormat.SKIP_NAMESPACES, "true");
+		xmlJsonOptions.put(org.apache.camel.model.dataformat.XmlJsonDataFormat.SKIP_WHITESPACE, "true");
+		xmlJsonOptions.put(org.apache.camel.model.dataformat.XmlJsonDataFormat.FORCE_TOP_LEVEL_OBJECT, "false");
+		xmlJsonOptions.put(org.apache.camel.model.dataformat.XmlJsonDataFormat.REMOVE_NAMESPACE_PREFIXES, "true");
+		xmlJsonOptions.put(org.apache.camel.model.dataformat.XmlJsonDataFormat.EXPANDABLE_PROPERTIES, "d e");
+		return servlet;
+	}
+
+	@Component
+	class RestApi extends RouteBuilder {
+		@Override
+		public void configure() throws Exception {
+
+			restConfiguration().contextPath("/consultarMoeda").apiContextPath("/api-doc")
+					.apiProperty("api.title", "Casa da Moeda REST API").apiProperty("api.version", "1.0")
+					.apiProperty("cors", "true").apiContextRouteId("doc-api").component("servlet")
+					.bindingMode(RestBindingMode.json);
+			rest("/moeda").description("Find moeda by codSerie").get("").produces("application/json")// .to("direct:marshalInlineOptions")
+					.to("bean:moedaBean?method=consultaCotacao(${headers.codSerie})");
+			from("direct:marshalInlineOptions").marshal().xmljson(xmlJsonOptions).to("mock:jsonInlineOptions");
 		}
+
 	}
 
-	public static void print(Object o) {
-		System.out.println(o);
-	}
-
-	public static String getMoeda(String codSerie) {
-		System.out.println("Código Série digitado no header =" + codSerie);
-		String responseAsString = null;
-		HttpClient client = HttpClientBuilder.create().build();
-		HttpGet request = new HttpGet("https://www3.bcb.gov.br/wssgs/services/FachadaWSSGS?in0=1");
-		HttpResponse response = null;
-		try {
-			Header[] allHeaders = request.getAllHeaders();
-			for (Header h : allHeaders) {
-				System.out.println(h.getName());
-				System.out.println(h.getValue());
-
-			}
-			HttpParams params = request.getParams();
-			print(params.getParameter("in0"));
-			print(request.getMethod());
-			response = client.execute(request);
-
-			InputStream inputStream = response.getEntity().getContent();
-			responseAsString = CharStreams.toString(new InputStreamReader(inputStream, "UTF-8"));
-			System.out.println(response.getStatusLine().getStatusCode());
-			System.out.println("Executou o Cerberus bean" + responseAsString);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		return responseAsString;
-	}
-
-	public static String callWebService(String soapAction, String soapEnvBody) throws ClientProtocolException, IOException {
-		// Create a StringEntity for the SOAP XML.
-		//String body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><SOAP-ENV:Envelope xmlns:SOAP-ENV=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:ns1=\"http://example.com/v1.0/Records\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:SOAP-ENC=\"http://schemas.xmlsoap.org/soap/encoding/\" SOAP-ENV:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\"><SOAP-ENV:Body>"
-			//	+ soapEnvBody + "</SOAP-ENV:Body></SOAP-ENV:Envelope>";
-		StringBuilder body = new StringBuilder("<soapenv:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance");
-		body.append(
-				"xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/");
-		body.append("xmlns:pub=\"http://publico.ws.casosdeuso.sgs.pec.bcb.gov.br\">");
-		body.append("<soapenv:Header/>");
-		body.append(" <soapenv:Body>");
-		body.append("  <pub:getUltimoValorXML soapenv:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">");
-		body.append(" <in0 xsi:type=\"xsd:long\">1</in0>");
-		body.append("</pub:getUltimoValorXML>");
-		body.append("</soapenv:Body>");
-		body.append("</soapenv:Envelope>");
-		StringEntity stringEntity = new StringEntity(body.toString(), "UTF-8");
-		stringEntity.setChunked(true);
-
-		// Request parameters and other properties.
-		HttpPost httpPost = new HttpPost("https://www3.bcb.gov.br/wssgs/services/FachadaWSSGS");
-		httpPost.setEntity(stringEntity);
-		httpPost.addHeader("Accept", "text/xml");
-		httpPost.addHeader("SOAPAction", soapAction);
-
-		// Execute and get the response.
-		HttpClient httpClient = new DefaultHttpClient();
-		HttpResponse response = httpClient.execute(httpPost);
-		HttpEntity entity = response.getEntity();
-
-		String strResponse = null;
-		if (entity != null) {
-			strResponse = EntityUtils.toString(entity);
-		}
-		return strResponse;
-	}
 }
