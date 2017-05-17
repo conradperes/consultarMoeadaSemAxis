@@ -57,4 +57,10 @@
 		<nature>org.jboss.tools.cdi.core.cdinature</nature>
 		<nature>org.hibernate.eclipse.console.hibernateNature</nature>
 	</natures>
+	<variableList>
+		<variable>
+			<name>M2_HOME</name>
+			<value>file:/C:/apache-maven-3.3.9-bin/apache-maven-3.3.9/bin/mvn.cmd</value>
+		</variable>
+	</variableList>
 </projectDescription>

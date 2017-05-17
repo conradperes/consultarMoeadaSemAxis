@@ -14,7 +14,7 @@
  * permissions and limitations under the License.
  *
  */
-package com.cds.pcrj.bacenConsultaMoedaSemAxisIntegration;
+package com.cds.bacenConsultaMoedaClient;
 
 import java.util.HashMap;
 import java.util.List;
@@ -38,8 +38,8 @@ import org.apache.camel.Exchange;
 import org.apache.camel.Message;
 import org.apache.camel.Processor;
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.component.cxf.common.message.CxfConstants;
-import org.apache.cxf.message.MessageContentsList;
+//import org.apache.camel.component.cxf.common.message.CxfConstants;
+//import org.apache.cxf.message.MessageContentsList;
 
 @SpringBootApplication
 // load regular Spring XML file from the classpath that contains the Camel XML
@@ -89,9 +89,10 @@ public class Application {
 					.apiProperty("api.title", "Casa da Moeda REST API").apiProperty("api.version", "1.0")
 					.apiProperty("cors", "true").apiContextRouteId("doc-api").component("servlet")
 					.bindingMode(RestBindingMode.json);
-			rest("/moeda").description("Find moeda by codSerie").get("").produces("application/json")// .to("direct:marshalInlineOptions")
-					.to("bean:moedaBean?method=consultaCotacao(${headers.codSerie})");
-			from("direct:marshalInlineOptions").marshal().xmljson(xmlJsonOptions).to("mock:jsonInlineOptions");
+			rest("/moeda").description("Find moeda by codSerie").get("").produces("application/json").to("direct:xpathFilter");
+			
+			
+			from("direct:xpathFilter").to("bean:moedaBean?method=consultaCotacao(${headers.codigoSerie})");//.split(xpath("//SERIE"))
 		}
 
 	}

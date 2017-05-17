@@ -14,18 +14,11 @@
  * permissions and limitations under the License.
  *
  */
-package com.cds.pcrj.bacenConsultaMoedaSemAxisIntegration;
+package com.cds.bacenConsultaMoedaClient;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
-
-import org.eclipse.persistence.jaxb.MarshallerProperties;
 import org.springframework.stereotype.Component;
 
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
@@ -33,7 +26,6 @@ import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import com.thoughtworks.xstream.io.copy.HierarchicalStreamCopier;
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 import com.thoughtworks.xstream.io.xml.XppReader;
-import com.utilities.jaxb.DatabaseInventory;
 
 /**
  * A sample transform
@@ -59,7 +51,7 @@ public class MyTransformer {
 		JettisonMappedXmlDriver jettisonDriver = new JettisonMappedXmlDriver();
 		jettisonDriver.createWriter(buffer);
 		HierarchicalStreamWriter destinationWriter = jettisonDriver.createWriter(buffer);
-		destinationWriter.startNode("soapenv:Envelope");
+		//destinationWriter.startNode("soapenv:Envelope");
 		HierarchicalStreamCopier copier = new HierarchicalStreamCopier();
 		copier.copy(sourceReader, destinationWriter);
 		return buffer.toString();
