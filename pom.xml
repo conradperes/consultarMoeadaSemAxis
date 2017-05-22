@@ -6,8 +6,8 @@
 	<groupId>com.cds.pcrj</groupId>
 	<artifactId>bacenConsultaMoedaSemAxisIntegration</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>Fabric8 :: Quickstarts :: Spring-Boot :: Camel XML</name>
-	<description>Spring Boot example running a Camel route defined in XML</description>
+	<name>Api de Cotação de Moedas do Jboss Fuse ESB GICOF</name>
+	<description>Essa Api de Moedas reflete a cotação de moedas diária via codSerie via barramento ESB</description>
 	<properties>
 		<spring-boot.version>1.4.3.RELEASE</spring-boot.version>
 		<fabric8.version>2.2.192</fabric8.version>
